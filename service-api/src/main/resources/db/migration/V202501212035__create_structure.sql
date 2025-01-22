@@ -7,8 +7,11 @@ CREATE TABLE project110.category (
 
 CREATE TABLE project110.product (
     id BIGSERIAL PRIMARY KEY,
+    category_id BIGINT,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    price NUMERIC(10, 2) NOT NULL,
-    category_id BIGINT REFERENCES category(id)
+    price NUMERIC(10, 2) NOT NULL
 );
+
+ALTER TABLE IF EXISTS project110.product
+    ADD CONSTRAINT product_category_id_fk FOREIGN KEY (category_id) REFERENCES project110.category;
