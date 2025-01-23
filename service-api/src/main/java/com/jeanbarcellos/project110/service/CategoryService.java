@@ -9,9 +9,13 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.jeanbarcellos.project110.dto.CategoryRequest;
+import com.jeanbarcellos.project110.dto.CategoryResponse;
 import com.jeanbarcellos.project110.entity.Category;
+import com.jeanbarcellos.project110.mapper.CategoryMapper;
 import com.jeanbarcellos.project110.repository.CategoryRepository;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,13 +25,14 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
+
+    private static final String CACHE_NAME = "categories";
 
     private final CategoryRepository categoryRepository;
 
-    public CategoryService(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
-    }
+    private final CategoryMapper categoryMapper;
 
     /**
      * Recupera todas as categorias do banco de dados.
@@ -35,29 +40,34 @@ public class CategoryService {
      * - Usa cache para armazenar a lista completa de categorias com a chave 'all'.
      * - Sempre consulta o cache antes de buscar no banco.
      */
-    @Cacheable(value = "categories", key = "'all'")
-    public List<Category> getAllCategories() {
+    @Cacheable(value = CACHE_NAME, key = "'all'")
+    public List<CategoryResponse> getAll() {
         log.info("getAllCategories");
 
         doLongRunningTask();
 
-        return this.categoryRepository.findAll();
+        var categories = this.categoryRepository.findAll();
+
+        return this.categoryMapper.toResponseList(categories);
     }
 
     /**
      * Recupera uma categoria específica pelo ID.
      *
-     * - Usa cache para armazenar cada categoria individualmente com a chave baseada no ID.
-     * - O cache é preenchido na primeira chamada deste método para um ID específico.
+     * - Usa cache para armazenar cada categoria individualmente com a chave baseada
+     * no ID.
+     * - O cache é preenchido na primeira chamada deste método para um ID
+     * específico.
      */
-    @Cacheable(value = "categories", key = "#id")
-    public Category getCategoryById(Long id) {
+    @Cacheable(value = CACHE_NAME, key = "#id")
+    public CategoryResponse getById(Long id) {
         log.info("getCategoryById");
 
         doLongRunningTask();
 
-        return this.categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found: " + id));
+        var category = this.findByIdOrThrow(id);
+
+        return this.categoryMapper.toResponse(category);
     }
 
     /**
@@ -66,11 +76,15 @@ public class CategoryService {
      * - Adiciona ao cache o produto criado.
      * - Invalida o cache da lista completa ('all').
      */
-    @CachePut(value = "categories", key = "#result.id")
-    @CacheEvict(value = "categories", key = "'all'")
+    @CachePut(value = CACHE_NAME, key = "#result.id")
+    @CacheEvict(value = CACHE_NAME, key = "'all'")
     @Transactional
-    public Category createCategory(Category category) {
-        return this.categoryRepository.save(category);
+    public CategoryResponse create(CategoryRequest request) {
+        var category = this.categoryMapper.toEntity(request);
+
+        category = this.categoryRepository.save(category);
+
+        return this.categoryMapper.toResponse(category);
     }
 
     /**
@@ -79,15 +93,17 @@ public class CategoryService {
      * - Atualiza o cache da categoria específica.
      * - Invalida o cache da lista completa ('all').
      */
-    @CachePut(value = "categories", key = "#result.id")
-    @CacheEvict(value = "categories", key = "'all'")
+    @CachePut(value = CACHE_NAME, key = "#result.id")
+    @CacheEvict(value = CACHE_NAME, key = "'all'")
     @Transactional
-    public Category updateCategory(Long id, Category category) {
-        Category entity = this.getCategoryById(id);
+    public CategoryResponse update(CategoryRequest request) {
+        var category = this.findByIdOrThrow(request.getId());
 
-        entity.setName(category.getName());
+        this.categoryMapper.copy(category, request);
 
-        return this.categoryRepository.save(entity);
+        category = this.categoryRepository.save(category);
+
+        return this.categoryMapper.toResponse(category);
     }
 
     /**
@@ -97,11 +113,15 @@ public class CategoryService {
      * - Invalida o cache da lista completa ('all').
      */
     @Caching(evict = {
-        @CacheEvict(value = "categories", key = "#id"),
-        @CacheEvict(value = "categories", key = "'all'") })
+            @CacheEvict(value = CACHE_NAME, key = "#id"),
+            @CacheEvict(value = CACHE_NAME, key = "'all'") })
     @Transactional
-    public void deleteCategory(Long id) {
+    public void delete(Long id) {
         this.categoryRepository.deleteById(id);
+    }
+
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
+    public void clearCache() {
     }
 
     private void doLongRunningTask() {
@@ -113,4 +133,10 @@ public class CategoryService {
             e.printStackTrace();
         }
     }
+
+    private Category findByIdOrThrow(Long id) {
+        return this.categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found: " + id));
+    }
+
 }

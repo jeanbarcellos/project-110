@@ -1,9 +1,8 @@
 package com.jeanbarcellos.project110.controller;
 
-
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,49 +13,45 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.jeanbarcellos.project110.entity.Person;
+import com.jeanbarcellos.project110.dto.PersonRequest;
+import com.jeanbarcellos.project110.dto.PersonResponse;
 import com.jeanbarcellos.project110.service.PersonService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/persons")
 @Tag(name = "Persons", description = "Manage Persons")
 public class PersonController {
 
-    @Autowired
-    private PersonService personService;
+    private final PersonService personService;
 
     @GetMapping
-    public ResponseEntity<List<Person>> getAllPersons() {
-        List<Person> persons = personService.getAllPersons();
-        return ResponseEntity.ok(persons);
+    public ResponseEntity<List<PersonResponse>> getAll() {
+        return ResponseEntity.ok(this.personService.getAll());
     }
 
-
     @GetMapping("/{id}")
-    public ResponseEntity<Person> getPersonById(@PathVariable Long id) {
-        Person person = personService.getPersonById(id);
-        return ResponseEntity.ok(person);
+    public ResponseEntity<PersonResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(this.personService.getById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Person> createPerson(@RequestBody Person person) {
-        Person createdPerson = personService.createPerson(person);
-        return ResponseEntity.ok(createdPerson);
+    public ResponseEntity<PersonResponse> create(@RequestBody PersonRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED.value())
+                .body(this.personService.create(request));
     }
-
 
     @PutMapping("/{id}")
-    public ResponseEntity<Person> updatePerson(@PathVariable Long id, @RequestBody Person person) {
-        Person updatedPerson = personService.updatePerson(id, person);
-        return ResponseEntity.ok(updatedPerson);
+    public ResponseEntity<PersonResponse> update(@PathVariable Long id, @RequestBody PersonRequest request) {
+        return ResponseEntity.ok(this.personService.update(request.setId(id)));
     }
 
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePerson(@PathVariable Long id) {
-        personService.deletePerson(id);
-        return ResponseEntity.noContent().build();
+    public void delete(@PathVariable Long id) {
+        this.personService.delete(id);
+        ResponseEntity.noContent();
     }
 }

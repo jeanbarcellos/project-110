@@ -3,47 +3,52 @@ package com.jeanbarcellos.project110.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
+import com.jeanbarcellos.project110.dto.PersonRequest;
+import com.jeanbarcellos.project110.dto.PersonResponse;
 import com.jeanbarcellos.project110.entity.Person;
+import com.jeanbarcellos.project110.mapper.PersonMapper;
 import com.jeanbarcellos.project110.repository.PersonRepository;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class PersonService {
 
     private static final String CACHE_NAME = "persons";
     private static final String CACHE_KEY_ALL = "all";
 
-    @Autowired
-    private PersonRepository personRepository;
+    private final CacheManager cacheManager;
 
-    @Autowired
-    private CacheManager cacheManager;
+    private final PersonRepository personRepository;
+
+    private final PersonMapper personMapper;
+
 
     /**
      * Recupera todas as pessoas.
      *
      * Usa cache manual com a chave 'all'.
      */
-    public List<Person> getAllPersons() {
-        List<Person> persons = getAllPersonsFromCache();
+    public List<PersonResponse> getAll() {
+        var persons = getAllPersonsFromCache();
 
         if (persons != null) {
-            return persons;
+            return personMapper.toResponseList(persons);
         }
 
-        persons = personRepository.findAll();
+        persons = this.personRepository.findAll();
         log.info("personRepository.findAll()");
 
         setPersonsToCache(persons);
 
-        return persons;
+        return this.personMapper.toResponseList(persons);
     }
 
     /**
@@ -51,22 +56,18 @@ public class PersonService {
      *
      * Usa cache manual com a chave baseada no ID.
      */
-    public Person getPersonById(Long id) {
-        Person person = getPersonFromCache(id);
+    public PersonResponse getById(Long id) {
+        var person = getPersonFromCache(id);
 
         if (person != null) {
-            return person;
+            return this.personMapper.toResponse(person);
         }
 
-        if (person == null) {
-            log.info("personRepository.findById({})", id);
-            person = personRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Person not found"));
+        person = this.findByIdOrThrow(id);
 
-            addPersonToCache(person);
-        }
+        addPersonToCache(person);
 
-        return person;
+        return this.personMapper.toResponse(person);
     }
 
     /**
@@ -74,13 +75,15 @@ public class PersonService {
      *
      * Atualiza o cache da lista completa e insere a pessoa individualmente.
      */
-    public Person createPerson(Person person) {
-        Person createdPerson = personRepository.save(person);
+    public PersonResponse create(PersonRequest request) {
+        var person = this.personMapper.toEntity(request);
+
+        person = this.personRepository.save(person);
 
         updateAllPersonsCache();
-        addPersonToCache(createdPerson);
+        addPersonToCache(person);
 
-        return createdPerson;
+        return this.personMapper.toResponse(person);
     }
 
     /**
@@ -88,18 +91,17 @@ public class PersonService {
      *
      * Atualiza o cache da pessoa específica e da lista completa.
      */
-    public Person updatePerson(Long id, Person person) {
-        Person existingPerson = getPersonById(id);
+    public PersonResponse update(PersonRequest request) {
+        var person = this.findByIdOrThrow(request.getId());
 
-        existingPerson.setName(person.getName());
-        existingPerson.setBirthDate(person.getBirthDate());
+        this.personMapper.copy(person, request);
 
-        Person updatedPerson = personRepository.save(existingPerson);
+        person = this.personRepository.save(person);
 
         updateAllPersonsCache();
-        addPersonToCache(updatedPerson);
+        addPersonToCache(person);
 
-        return updatedPerson;
+        return this.personMapper.toResponse(person);
     }
 
     /**
@@ -107,14 +109,17 @@ public class PersonService {
      *
      * Atualiza o cache da lista completa e remove a pessoa específica do cache.
      */
-    public void deletePerson(Long id) {
-        if (!personRepository.existsById(id)) {
-            throw new RuntimeException("Person not found");
-        }
+    public void delete(Long id) {
         personRepository.deleteById(id);
 
         updateAllPersonsCache();
         removePersonFromCache(id);
+    }
+
+    private Person findByIdOrThrow(Long id) {
+        log.info("personRepository.findById({})", id);
+        return this.personRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Person not found" + id));
     }
 
     // ----
@@ -132,9 +137,7 @@ public class PersonService {
         }
     }
 
-    // ----
-
-
+    @SuppressWarnings("unchecked")
     private List<Person> getAllPersonsFromCache() {
         List<Person> persons = new ArrayList<>();
 

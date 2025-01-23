@@ -1,7 +1,5 @@
 package com.jeanbarcellos.project110.entity;
 
-import java.io.Serializable;
-
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.Column;
@@ -27,7 +25,7 @@ import lombok.Setter;
 @Entity
 @DynamicUpdate
 @Table(schema = "project110", name = "category")
-public class Category implements Serializable {
+public class Category {
 
     @Id
     @GeneratedValue(generator = "category_id_seq_generator", strategy = GenerationType.SEQUENCE)

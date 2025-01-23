@@ -1,6 +1,5 @@
 package com.jeanbarcellos.project110.entity;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 
 import org.hibernate.annotations.DynamicUpdate;
@@ -32,7 +31,7 @@ import lombok.Setter;
 @Entity
 @DynamicUpdate
 @Table(schema = "project110", name = "product")
-public class Product implements Serializable {
+public class Product {
 
     @Id
     @GeneratedValue(generator = "product_id_seq_generator", strategy = GenerationType.SEQUENCE)
