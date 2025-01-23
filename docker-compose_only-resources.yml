@@ -1,0 +1,50 @@
+version: "3.4"
+
+services:
+  database:
+    container_name: project110_database
+    image: postgres:14.5
+    restart: always
+    ports:
+      - 5532:5432
+    networks:
+      - project110_net
+    volumes:
+      - project110_database_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=project110
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  redis:
+    container_name: project110_redis
+    image: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - project110_redis_data:/data
+    command: redis-server --appendonly yes # --requirepass "password"
+
+  redis-web-client:
+    container_name: project110_redis-web-client
+    image: rediscommander/redis-commander
+    depends_on:
+      - redis
+    ports:
+      - 8081:8081
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+
+networks:
+  project110_net:
+    name: project110_net
+    driver: bridge
+
+volumes:
+  project110_database_data:
+    name: project110_database_data
+    driver: local
+
+  project110_redis_data:
+    name: project110_redis_data
+    driver: local

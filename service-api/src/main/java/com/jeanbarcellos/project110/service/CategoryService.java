@@ -37,6 +37,8 @@ public class CategoryService {
      */
     @Cacheable(value = "categories", key = "'all'")
     public List<Category> getAllCategories() {
+        log.info("getAllCategories");
+
         doLongRunningTask();
 
         return this.categoryRepository.findAll();
@@ -50,6 +52,8 @@ public class CategoryService {
      */
     @Cacheable(value = "categories", key = "#id")
     public Category getCategoryById(Long id) {
+        log.info("getCategoryById");
+
         doLongRunningTask();
 
         return this.categoryRepository.findById(id)
