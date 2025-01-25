@@ -71,7 +71,7 @@ app-config:
   version: @project.version@
 
   cache:
-    defaults:
+    default:
       ttl: 1 # horas
     categories:
       name: "categories"
