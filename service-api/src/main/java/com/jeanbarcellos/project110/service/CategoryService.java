@@ -28,7 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class CategoryService {
 
+    private static final String MSG_ERROR_CATEGORY_NOT_FOUND = "Category not found: %s";
+
     private static final String CACHE_NAME = "categories";
+    private static final String CACHE_KEY_ALL = "'all'";
 
     private final CategoryRepository categoryRepository;
 
@@ -40,8 +43,8 @@ public class CategoryService {
      * - Usa cache para armazenar a lista completa de categorias com a chave 'all'.
      * - Sempre consulta o cache antes de buscar no banco.
      */
-    @Cacheable(value = CACHE_NAME, key = "'all'")
-    public List<CategoryResponse> getAll() {
+    @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL)
+    public List<CategoryResponse> getCacheKeyAll() {
         log.info("getAllCategories");
 
         doLongRunningTask();
@@ -77,7 +80,7 @@ public class CategoryService {
      * - Invalida o cache da lista completa ('all').
      */
     @CachePut(value = CACHE_NAME, key = "#result.id")
-    @CacheEvict(value = CACHE_NAME, key = "'all'")
+    @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public CategoryResponse create(CategoryRequest request) {
         var category = this.categoryMapper.toEntity(request);
@@ -94,7 +97,7 @@ public class CategoryService {
      * - Invalida o cache da lista completa ('all').
      */
     @CachePut(value = CACHE_NAME, key = "#result.id")
-    @CacheEvict(value = CACHE_NAME, key = "'all'")
+    @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public CategoryResponse update(CategoryRequest request) {
         var category = this.findByIdOrThrow(request.getId());
@@ -114,7 +117,7 @@ public class CategoryService {
      */
     @Caching(evict = {
             @CacheEvict(value = CACHE_NAME, key = "#id"),
-            @CacheEvict(value = CACHE_NAME, key = "'all'") })
+            @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL) })
     @Transactional
     public void delete(Long id) {
         this.categoryRepository.deleteById(id);
@@ -136,7 +139,7 @@ public class CategoryService {
 
     private Category findByIdOrThrow(Long id) {
         return this.categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found: " + id));
+                .orElseThrow(() -> new RuntimeException(String.format(MSG_ERROR_CATEGORY_NOT_FOUND, id)));
     }
 
 }

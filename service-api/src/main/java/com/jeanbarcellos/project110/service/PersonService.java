@@ -16,10 +16,15 @@ import com.jeanbarcellos.project110.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Testar cache manual
+ */
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class PersonService {
+
+    private static final String MSG_ERROR_PERSON_NOT_FOUND = "Person not found: %s";
 
     private static final String CACHE_NAME = "persons";
     private static final String CACHE_KEY_ALL = "all";
@@ -29,7 +34,6 @@ public class PersonService {
     private final PersonRepository personRepository;
 
     private final PersonMapper personMapper;
-
 
     /**
      * Recupera todas as pessoas.
@@ -42,6 +46,8 @@ public class PersonService {
         if (persons != null) {
             return personMapper.toResponseList(persons);
         }
+
+        doLongRunningTask();
 
         persons = this.personRepository.findAll();
         log.info("personRepository.findAll()");
@@ -62,6 +68,8 @@ public class PersonService {
         if (person != null) {
             return this.personMapper.toResponse(person);
         }
+
+        doLongRunningTask();
 
         person = this.findByIdOrThrow(id);
 
@@ -119,7 +127,17 @@ public class PersonService {
     private Person findByIdOrThrow(Long id) {
         log.info("personRepository.findById({})", id);
         return this.personRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Person not found" + id));
+                .orElseThrow(() -> new RuntimeException(String.format(MSG_ERROR_PERSON_NOT_FOUND, id)));
+    }
+
+    private void doLongRunningTask() {
+        log.info("Query no banco de dados");
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     // ----

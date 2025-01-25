@@ -63,3 +63,22 @@ springdoc:
     path: /swagger
     operationsSorter: alpha
     tagsSorter: alpha
+
+
+app-config:
+  name: @project.name@
+  description: @project.description@
+  version: @project.version@
+
+  cache:
+    defaults:
+      ttl: 1 # horas
+    categories:
+      name: "categories"
+      ttl: 24 # horas
+    products:
+      name: "products"
+      ttl: 16 # horas
+    persons:
+      name: "persons"
+      ttl: 8 # horas

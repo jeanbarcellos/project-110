@@ -27,7 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ProductService {
 
+    private static final String MSG_ERROR_PERSON_NOT_FOUND = "Product not found: %s";
+
     private static final String CACHE_NAME = "products";
+    private static final String CACHE_KEY_ALL = "'all'";
 
     private final ProductRepository productRepository;
 
@@ -40,15 +43,15 @@ public class ProductService {
      * - O cache só é preenchido quando este método é chamado pela primeira vez.
      * - Se o cache for inválido, os dados serão recarregados do banco.
      */
-    @Cacheable(value = CACHE_NAME, key = "'all'")
-    public List<ProductResponse> getAll() {
-        log.info("getAllProducts");
+    @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL)
+    public List<ProductResponse> getCacheKeyAll() {
+        log.info("ProductService.getAll()");
 
         doLongRunningTask();
 
         var categories = this.productRepository.findAll();
 
-        return productMapper.toResponseList(categories);
+        return this.productMapper.toResponseList(categories);
     }
 
     /**
@@ -59,7 +62,7 @@ public class ProductService {
      */
     @Cacheable(value = CACHE_NAME, key = "#id")
     public ProductResponse getById(Long id) {
-        log.info("getProductById");
+        log.info("ProductService.getById()");
 
         doLongRunningTask();
 
@@ -73,7 +76,7 @@ public class ProductService {
      *
      * - Remove o cache da lista completa ('all') para garantir que ela seja recarregada na próxima consulta.
      */
-    @CacheEvict(value = CACHE_NAME, key = "'all'")
+    @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public ProductResponse create(ProductRequest request) {
         var product = this.productMapper.toEntity(request);
@@ -91,7 +94,7 @@ public class ProductService {
      */
     @Caching(evict = {
         @CacheEvict(value = CACHE_NAME, key = "#result.id"),
-        @CacheEvict(value = CACHE_NAME, key = "'all'") })
+        @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL) })
     @Transactional
     public ProductResponse update(ProductRequest request) {
         var product = this.findByIdOrThrow(request.getId());
@@ -111,7 +114,7 @@ public class ProductService {
      */
     @Caching(evict = {
             @CacheEvict(value = CACHE_NAME, key = "#id"),
-            @CacheEvict(value = CACHE_NAME, key = "'all'") })
+            @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL) })
     @Transactional
     public void delete(Long id) {
         this.productRepository.deleteById(id);
@@ -133,7 +136,7 @@ public class ProductService {
 
     private Product findByIdOrThrow(Long id) {
         return this.productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found: " + id));
+        .orElseThrow(() -> new RuntimeException(String.format(MSG_ERROR_PERSON_NOT_FOUND, id)));
     }
 
 }
