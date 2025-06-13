@@ -15,7 +15,9 @@ import lombok.NoArgsConstructor;
 public class PersonResponse implements Serializable {
 
     private Long id;
+
     private String name;
+
     private LocalDate birthDate;
 
 }

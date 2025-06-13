@@ -1,6 +1,7 @@
 package com.jeanbarcellos.project110.dto;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,9 +15,13 @@ import lombok.NoArgsConstructor;
 public class ProductResponse implements Serializable {
 
     private Long id;
+
     private String name;
+
     private String description;
-    private Double price;
+
+    private BigDecimal price;
+
     private String categoryName;
 
 }

@@ -4,6 +4,8 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +20,10 @@ public class PersonRequest {
     @JsonIgnore
     private Long id;
 
+    @NotBlank
     private String name;
-    private LocalDate birthDate;;
+
+    @NotNull
+    private LocalDate birthDate;
 
 }

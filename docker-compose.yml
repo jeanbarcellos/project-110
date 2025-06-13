@@ -16,9 +16,9 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
 
-  backend:
-    container_name: project110_backend
-    image: jeanbarcellos/desafio-project110:latest
+  service-api:
+    container_name: project110_service-api
+    image: jeanbarcellos/project110_service-api:latest
     depends_on:
       - database
     ports:
@@ -32,11 +32,8 @@ services:
       - DB_NAME=project110
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - APP_URL=http://localhost:8080
-      - APP_KEY='ZGVtby1zZWNyZXQtZGV2LTEyMzQ1Ng=='
-      - APP_JWT_EXPIRATION=1440
     volumes:
-      - project110_backend_data:/logs
+      - project110_service-api_data:/logs
 
 networks:
   project110_net:
@@ -48,6 +45,6 @@ volumes:
     name: project110_database_data
     driver: local
 
-  project110_backend_data:
-    name: project110_backend_data
+  project110_service-api_data:
+    name: project110_service-api_data
     driver: local
