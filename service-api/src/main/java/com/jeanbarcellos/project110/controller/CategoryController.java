@@ -32,7 +32,7 @@ public class CategoryController {
     @GetMapping
     @Operation(summary = "Listar todas as categorias")
     public ResponseEntity<List<CategoryResponse>> getAll() {
-        return ResponseEntity.ok(this.categoryService.getCacheKeyAll());
+        return ResponseEntity.ok(this.categoryService.getAll());
     }
 
     @GetMapping("/{id}")

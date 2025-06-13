@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.jeanbarcellos.core.util.ThreadUtils;
 import com.jeanbarcellos.project110.dto.CategoryRequest;
 import com.jeanbarcellos.project110.dto.CategoryResponse;
 import com.jeanbarcellos.project110.entity.Category;
@@ -44,10 +45,11 @@ public class CategoryService {
      * - Sempre consulta o cache antes de buscar no banco.
      */
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL)
-    public List<CategoryResponse> getCacheKeyAll() {
+    public List<CategoryResponse> getAll() {
         log.info("getAllCategories");
 
-        doLongRunningTask();
+        log.info("Query no banco de dados");
+        ThreadUtils.delay(3000);
 
         var categories = this.categoryRepository.findAll();
 
@@ -66,7 +68,8 @@ public class CategoryService {
     public CategoryResponse getById(Long id) {
         log.info("getCategoryById");
 
-        doLongRunningTask();
+        log.info("Query no banco de dados");
+        ThreadUtils.delay(3000);
 
         var category = this.findByIdOrThrow(id);
 
@@ -125,16 +128,6 @@ public class CategoryService {
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
     public void clearCache() {
-    }
-
-    private void doLongRunningTask() {
-        log.info("Query no banco de dados");
-
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     private Category findByIdOrThrow(Long id) {

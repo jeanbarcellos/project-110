@@ -7,6 +7,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
+import com.jeanbarcellos.core.util.ThreadUtils;
 import com.jeanbarcellos.project110.dto.PersonRequest;
 import com.jeanbarcellos.project110.dto.PersonResponse;
 import com.jeanbarcellos.project110.entity.Person;
@@ -47,7 +48,8 @@ public class PersonService {
             return personMapper.toResponseList(persons);
         }
 
-        doLongRunningTask();
+        log.info("Query no banco de dados");
+        ThreadUtils.delay(3000);
 
         persons = this.personRepository.findAll();
         log.info("personRepository.findAll()");
@@ -69,7 +71,8 @@ public class PersonService {
             return this.personMapper.toResponse(person);
         }
 
-        doLongRunningTask();
+        log.info("Query no banco de dados");
+        ThreadUtils.delay(3000);
 
         person = this.findByIdOrThrow(id);
 
@@ -128,16 +131,6 @@ public class PersonService {
         log.info("personRepository.findById({})", id);
         return this.personRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(String.format(MSG_ERROR_PERSON_NOT_FOUND, id)));
-    }
-
-    private void doLongRunningTask() {
-        log.info("Query no banco de dados");
-
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     // ----

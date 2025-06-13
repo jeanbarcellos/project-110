@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.jeanbarcellos.core.util.ThreadUtils;
 import com.jeanbarcellos.project110.dto.ProductRequest;
 import com.jeanbarcellos.project110.dto.ProductResponse;
 import com.jeanbarcellos.project110.entity.Product;
@@ -47,7 +48,8 @@ public class ProductService {
     public List<ProductResponse> getCacheKeyAll() {
         log.info("ProductService.getAll()");
 
-        doLongRunningTask();
+        log.info("Query no banco de dados");
+        ThreadUtils.delay(3000);
 
         var categories = this.productRepository.findAll();
 
@@ -64,7 +66,8 @@ public class ProductService {
     public ProductResponse getById(Long id) {
         log.info("ProductService.getById()");
 
-        doLongRunningTask();
+        log.info("Query no banco de dados");
+        ThreadUtils.delay(3000);
 
         var product = findByIdOrThrow(id);
 
@@ -122,16 +125,6 @@ public class ProductService {
 
     @CacheEvict(value = CACHE_NAME, allEntries = true)
     public void clearCache() {
-    }
-
-    private void doLongRunningTask() {
-        log.info("Query no banco de dados");
-
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     private Product findByIdOrThrow(Long id) {
