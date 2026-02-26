@@ -3,6 +3,7 @@ package com.jeanbarcellos.project110.entity;
 import java.io.Serializable;
 import java.time.LocalDate;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.Column;
@@ -26,6 +27,7 @@ import lombok.Setter;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @Entity
+@DynamicInsert
 @DynamicUpdate
 @Table(schema = "project110", name = "person")
 public class Person implements Serializable {

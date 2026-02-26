@@ -33,6 +33,8 @@ public class ProductService {
     private static final String CACHE_NAME = "products";
     private static final String CACHE_KEY_ALL = "'all'";
 
+    private static final int DB_DELAY = 1000;
+
     private final ProductRepository productRepository;
 
     private final ProductMapper productMapper;
@@ -45,15 +47,15 @@ public class ProductService {
      * - Se o cache for inválido, os dados serão recarregados do banco.
      */
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL)
-    public List<ProductResponse> getCacheKeyAll() {
+    public List<ProductResponse> getAll() {
         log.info("ProductService.getAll()");
 
         log.info("Query no banco de dados");
-        ThreadUtils.delay(3000);
+        ThreadUtils.delay(DB_DELAY);
 
-        var categories = this.productRepository.findAll();
+        var entities = this.productRepository.findAll();
 
-        return this.productMapper.toResponseList(categories);
+        return this.productMapper.toResponseList(entities);
     }
 
     /**
@@ -69,9 +71,9 @@ public class ProductService {
         log.info("Query no banco de dados");
         ThreadUtils.delay(3000);
 
-        var product = findByIdOrThrow(id);
+        var entity = this.findByIdOrThrow(id);
 
-        return this.productMapper.toResponse(product);
+        return this.productMapper.toResponse(entity);
     }
 
     /**
@@ -82,11 +84,11 @@ public class ProductService {
     @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public ProductResponse create(ProductRequest request) {
-        var product = this.productMapper.toEntity(request);
+        var entity = this.productMapper.toEntity(request);
 
-        product = this.productRepository.save(product);
+        entity = this.productRepository.save(entity);
 
-        return this.productMapper.toResponse(product);
+        return this.productMapper.toResponse(entity);
     }
 
     /**
@@ -100,13 +102,13 @@ public class ProductService {
         @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL) })
     @Transactional
     public ProductResponse update(ProductRequest request) {
-        var product = this.findByIdOrThrow(request.getId());
+        var entity = this.findByIdOrThrow(request.getId());
 
-        this.productMapper.copy(product, request);
+        this.productMapper.copy(entity, request);
 
-        product = this.productRepository.save(product);
+        entity = this.productRepository.save(entity);
 
-        return this.productMapper.toResponse(product);
+        return this.productMapper.toResponse(entity);
     }
 
     /**

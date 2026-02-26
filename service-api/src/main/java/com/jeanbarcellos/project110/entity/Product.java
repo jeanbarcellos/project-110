@@ -2,6 +2,7 @@ package com.jeanbarcellos.project110.entity;
 
 import java.math.BigDecimal;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.Column;
@@ -29,6 +30,7 @@ import lombok.Setter;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @Entity
+@DynamicInsert
 @DynamicUpdate
 @Table(schema = "project110", name = "product")
 public class Product {

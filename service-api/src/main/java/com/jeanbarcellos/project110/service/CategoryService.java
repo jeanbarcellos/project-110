@@ -34,6 +34,8 @@ public class CategoryService {
     private static final String CACHE_NAME = "categories";
     private static final String CACHE_KEY_ALL = "'all'";
 
+    private static final int DB_DELAY = 1000;
+
     private final CategoryRepository categoryRepository;
 
     private final CategoryMapper categoryMapper;
@@ -46,34 +48,32 @@ public class CategoryService {
      */
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL)
     public List<CategoryResponse> getAll() {
-        log.info("getAllCategories");
+        log.info("CategoryService.getAll()");
 
         log.info("Query no banco de dados");
-        ThreadUtils.delay(3000);
+        ThreadUtils.delay(DB_DELAY);
 
-        var categories = this.categoryRepository.findAll();
+        var entities = this.categoryRepository.findAll();
 
-        return this.categoryMapper.toResponseList(categories);
+        return this.categoryMapper.toResponseList(entities);
     }
 
     /**
      * Recupera uma categoria específica pelo ID.
      *
-     * - Usa cache para armazenar cada categoria individualmente com a chave baseada
-     * no ID.
-     * - O cache é preenchido na primeira chamada deste método para um ID
-     * específico.
+     * - Usa cache para armazenar cada categoria individualmente com a chave baseada    no ID.
+     * - O cache é preenchido na primeira chamada deste método para um ID específico.
      */
     @Cacheable(value = CACHE_NAME, key = "#id")
     public CategoryResponse getById(Long id) {
-        log.info("getCategoryById");
+        log.info("CategoryService.getById()");
 
         log.info("Query no banco de dados");
         ThreadUtils.delay(3000);
 
-        var category = this.findByIdOrThrow(id);
+        var entity = this.findByIdOrThrow(id);
 
-        return this.categoryMapper.toResponse(category);
+        return this.categoryMapper.toResponse(entity);
     }
 
     /**
@@ -86,11 +86,11 @@ public class CategoryService {
     @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public CategoryResponse create(CategoryRequest request) {
-        var category = this.categoryMapper.toEntity(request);
+        var entity = this.categoryMapper.toEntity(request);
 
-        category = this.categoryRepository.save(category);
+        entity = this.categoryRepository.save(entity);
 
-        return this.categoryMapper.toResponse(category);
+        return this.categoryMapper.toResponse(entity);
     }
 
     /**
@@ -103,13 +103,13 @@ public class CategoryService {
     @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public CategoryResponse update(CategoryRequest request) {
-        var category = this.findByIdOrThrow(request.getId());
+        var entity = this.findByIdOrThrow(request.getId());
 
-        this.categoryMapper.copy(category, request);
+        this.categoryMapper.copy(entity, request);
 
-        category = this.categoryRepository.save(category);
+        entity = this.categoryRepository.save(entity);
 
-        return this.categoryMapper.toResponse(category);
+        return this.categoryMapper.toResponse(entity);
     }
 
     /**

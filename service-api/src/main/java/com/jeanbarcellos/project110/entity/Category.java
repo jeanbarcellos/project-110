@@ -1,5 +1,6 @@
 package com.jeanbarcellos.project110.entity;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.Column;
@@ -23,6 +24,7 @@ import lombok.Setter;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @Entity
+@DynamicInsert
 @DynamicUpdate
 @Table(schema = "project110", name = "category")
 public class Category {

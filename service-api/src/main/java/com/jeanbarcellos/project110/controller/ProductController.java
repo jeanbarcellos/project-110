@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/v1/products")
+@RequestMapping("/api/v1/products")
 @Tag(name = "Products", description = "Manage products")
 public class ProductController {
 
@@ -32,7 +32,7 @@ public class ProductController {
     @GetMapping
     @Operation(summary = "Listar todas os produtos")
     public ResponseEntity<List<ProductResponse>> getAll() {
-        return ResponseEntity.ok(this.productService.getCacheKeyAll());
+        return ResponseEntity.ok(this.productService.getAll());
     }
 
     @GetMapping("/{id}")
