@@ -3,10 +3,9 @@ package com.jeanbarcellos.project110.cache;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 
+import com.jeanbarcellos.core.cache.CachePort;
 import com.jeanbarcellos.project110.dto.ProductResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -25,119 +24,53 @@ public class ProductCache {
     private static final String CACHE_NAME = "products";
     private static final String CACHE_KEY_ALL = "all";
 
-    private final CacheManager cacheManager;
+    private final CachePort cachePort;
 
-    @SuppressWarnings("unchecked")
     public List<ProductResponse> getAll() {
-        try {
-            var cache = this.getCacheOrNull();
-            if (cache == null) {
-                return null;
-            }
+        log.info("{} getAll()", LOG_PREFIX);
 
-            log.info("{} getAll()", LOG_PREFIX);
-            return cache.get(CACHE_KEY_ALL, List.class);
-        } catch (Exception ex) {
-            log.warn("{} Falha ao ler lista de produtos do cache.", LOG_PREFIX, ex);
-            return null;
-        }
+        return this.cachePort.getList(CACHE_NAME, CACHE_KEY_ALL);
     }
 
     public void putAll(List<ProductResponse> products) {
-        try {
-            var cache = this.getCacheOrNull();
-            if (cache == null) {
-                return;
-            }
+        int size = products == null ? 0 : products.size();
 
-            log.info("{} putAll(size={})", LOG_PREFIX, products == null ? 0 : products.size());
-            cache.put(CACHE_KEY_ALL, products);
-        } catch (Exception ex) {
-            log.warn("{} Falha ao gravar lista de produtos no cache.", LOG_PREFIX, ex);
-        }
+        log.info("{} putAll(size={})", LOG_PREFIX, size);
+
+        this.cachePort.put(CACHE_NAME, CACHE_KEY_ALL, products);
     }
 
     public void evictAll() {
-        try {
-            var cache = this.getCacheOrNull();
-            if (cache == null) {
-                return;
-            }
+        log.info("{} evictAll()", LOG_PREFIX);
 
-            log.info("{} evictAll()", LOG_PREFIX);
-            cache.evict(CACHE_KEY_ALL);
-        } catch (Exception ex) {
-            log.warn("{} Falha ao invalidar chave '{}' do cache.", LOG_PREFIX, CACHE_KEY_ALL, ex);
-        }
+        this.cachePort.evict(CACHE_NAME, CACHE_KEY_ALL);
     }
 
     public Optional<ProductResponse> getById(Long id) {
-        try {
-            var cache = this.getCacheOrNull();
-            if (cache == null) {
-                return Optional.empty();
-            }
+        log.info("{} getById({})", LOG_PREFIX, id);
 
-            log.info("{} getById({})", LOG_PREFIX, id);
-            return Optional.ofNullable(cache.get(id, ProductResponse.class));
-        } catch (Exception ex) {
-            log.warn("{} Falha ao ler produto {} do cache.", LOG_PREFIX, id, ex);
-            return Optional.empty();
-        }
+        return this.cachePort.get(CACHE_NAME, id, ProductResponse.class);
     }
 
     public void put(ProductResponse product) {
-        try {
-            if (product == null || product.getId() == null) {
-                return;
-            }
-
-            var cache = this.getCacheOrNull();
-            if (cache == null) {
-                return;
-            }
-
-            log.info("{} put({})", LOG_PREFIX, product.getId());
-            cache.put(product.getId(), product);
-        } catch (Exception ex) {
-            log.warn("{} Falha ao gravar produto no cache.", LOG_PREFIX, ex);
+        if (product == null || product.getId() == null) {
+            return;
         }
+
+        log.info("{} put({})", LOG_PREFIX, product.getId());
+
+        this.cachePort.put(CACHE_NAME, product.getId(), product);
     }
 
     public void evictById(Long id) {
-        try {
-            var cache = this.getCacheOrNull();
-            if (cache == null) {
-                return;
-            }
+        log.info("{} evictById({})", LOG_PREFIX, id);
 
-            log.info("{} evictById({})", LOG_PREFIX, id);
-            cache.evict(id);
-        } catch (Exception ex) {
-            log.warn("{} Falha ao remover produto {} do cache.", LOG_PREFIX, id, ex);
-        }
+        this.cachePort.evict(CACHE_NAME, id);
     }
 
     public void clearAllEntries() {
-        try {
-            var cache = this.getCacheOrNull();
-            if (cache == null) {
-                return;
-            }
+        log.info("{} clearAllEntries()", LOG_PREFIX);
 
-            log.info("{} clearAllEntries()", LOG_PREFIX);
-            cache.clear();
-        } catch (Exception ex) {
-            log.warn("{} Falha ao limpar cache de produtos.", LOG_PREFIX, ex);
-        }
-    }
-
-    private Cache getCacheOrNull() {
-        try {
-            return this.cacheManager.getCache(CACHE_NAME);
-        } catch (Exception ex) {
-            log.warn("{} Falha ao acessar cache '{}'.", LOG_PREFIX, CACHE_NAME, ex);
-            return null;
-        }
+        this.cachePort.clear(CACHE_NAME);
     }
 }

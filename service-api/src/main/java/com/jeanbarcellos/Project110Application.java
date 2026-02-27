@@ -1,4 +1,4 @@
-package com.jeanbarcellos.project110;
+package com.jeanbarcellos;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
