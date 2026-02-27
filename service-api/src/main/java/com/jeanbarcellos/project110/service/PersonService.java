@@ -1,13 +1,11 @@
 package com.jeanbarcellos.project110.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import com.jeanbarcellos.core.util.ThreadUtils;
+import com.jeanbarcellos.project110.cache.PersonCache;
 import com.jeanbarcellos.project110.dto.PersonRequest;
 import com.jeanbarcellos.project110.dto.PersonResponse;
 import com.jeanbarcellos.project110.entity.Person;
@@ -18,8 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Testar cache manual
- *
+ * Service de pessoas com regra de negocio separada da infraestrutura de cache.
  */
 @Slf4j
 @Service
@@ -28,40 +25,41 @@ public class PersonService {
 
     private static final String MSG_ERROR_PERSON_NOT_FOUND = "Person not found: %s";
 
-    private static final String CACHE_NAME = "persons";
-    private static final String CACHE_KEY_ALL = "all";
-
     private static final int DB_DELAY = 1000;
-
-    private final CacheManager cacheManager;
 
     private final PersonRepository personRepository;
 
     private final PersonMapper personMapper;
 
+    private final PersonCache personCache;
+
     /**
      * Recupera todas as pessoas.
      *
-     * Usa cache manual com a chave 'all'.
+     * Primeiro tenta retornar a lista do cache. Em caso de cache
+     * vazio/indisponivel,
+     * busca no banco e atualiza o cache.
      */
     public List<PersonResponse> getAll() {
         log.info("PersonService.getAll()");
 
-        var entities = this.getAllPersonsFromCache();
+        var cachedPersons = this.personCache.getAll();
 
-        if (entities != null) {
-            return personMapper.toResponseList(entities);
+        if (cachedPersons != null) {
+            return cachedPersons;
         }
 
         log.info("Query no banco de dados");
         ThreadUtils.delay(DB_DELAY);
 
-        entities = this.personRepository.findAll();
         log.info("personRepository.findAll()");
+        var entities = this.personRepository.findAll();
 
-        this.setPersonsToCache(entities);
+        var responseList = this.personMapper.toResponseList(entities);
 
-        return this.personMapper.toResponseList(entities);
+        this.personCache.putAll(responseList);
+
+        return responseList;
     }
 
     /**
@@ -70,20 +68,22 @@ public class PersonService {
      * Usa cache manual com a chave baseada no ID.
      */
     public PersonResponse getById(Long id) {
-        var entity = getPersonFromCache(id);
+        var cachedPerson = this.personCache.getById(id);
 
-        if (entity != null) {
-            return this.personMapper.toResponse(entity);
+        if (cachedPerson.isPresent()) {
+            return cachedPerson.get();
         }
 
         log.info("Query no banco de dados");
-        ThreadUtils.delay(3000);
+        ThreadUtils.delay(DB_DELAY);
 
-        entity = this.findByIdOrThrow(id);
+        var entity = this.findByIdOrThrow(id);
 
-        this.addPersonToCache(entity);
+        var response = this.personMapper.toResponse(entity);
 
-        return this.personMapper.toResponse(entity);
+        this.personCache.put(response);
+
+        return response;
     }
 
     /**
@@ -96,10 +96,12 @@ public class PersonService {
 
         entity = this.personRepository.save(entity);
 
-        this.updateAllPersonsCache();
-        this.addPersonToCache(entity);
+        var response = this.personMapper.toResponse(entity);
 
-        return this.personMapper.toResponse(entity);
+        this.personCache.put(response);
+        this.personCache.evictAll();
+
+        return response;
     }
 
     /**
@@ -114,10 +116,12 @@ public class PersonService {
 
         entity = this.personRepository.save(entity);
 
-        this.updateAllPersonsCache();
-        this.addPersonToCache(entity);
+        var response = this.personMapper.toResponse(entity);
 
-        return this.personMapper.toResponse(entity);
+        this.personCache.put(response);
+        this.personCache.evictAll();
+
+        return response;
     }
 
     /**
@@ -126,10 +130,10 @@ public class PersonService {
      * Atualiza o cache da lista completa e remove a pessoa específica do cache.
      */
     public void delete(Long id) {
-        personRepository.deleteById(id);
+        this.personRepository.deleteById(id);
 
-        this.updateAllPersonsCache();
-        this.removePersonFromCache(id);
+        this.personCache.evictById(id);
+        this.personCache.evictAll();
     }
 
     private Person findByIdOrThrow(Long id) {
@@ -138,78 +142,4 @@ public class PersonService {
                 .orElseThrow(() -> new RuntimeException(String.format(MSG_ERROR_PERSON_NOT_FOUND, id)));
     }
 
-    // ----
-
-    /**
-     * Atualiza o cache da lista completa de pessoas ('all').
-     */
-    private void updateAllPersonsCache() {
-        log.info("updateAllPersonsCache()");
-        Cache cache = cacheManager.getCache(CACHE_NAME);
-        if (cache != null) {
-            List<Person> entities = personRepository.findAll();
-            log.info("personRepository.findAll()");
-            cache.put(CACHE_KEY_ALL, entities);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<Person> getAllPersonsFromCache() {
-        List<Person> entities = new ArrayList<>();
-
-        Cache cache = cacheManager.getCache(CACHE_NAME);
-
-        if (cache != null) {
-            entities = cache.get(CACHE_KEY_ALL, List.class);
-            log.info("getAllPersonsFromCache()");
-        }
-
-        return entities;
-    }
-
-    private Person getPersonFromCache(Long id) {
-        log.info("getPersonFromCache({})", id);
-
-        Cache cache = cacheManager.getCache(CACHE_NAME);
-        Person entity = null;
-
-        if (cache != null) {
-            entity = cache.get(id, Person.class);
-        }
-
-        return entity;
-    }
-
-    /**
-     * Adiciona uma pessoa específica ao cache.
-     */
-    private void addPersonToCache(Person entity) {
-        log.info("addPersonToCache({})", entity.getId());
-
-        Cache cache = cacheManager.getCache(CACHE_NAME);
-        if (cache != null) {
-            cache.put(entity.getId(), entity);
-        }
-    }
-
-    /**
-     * Remove uma pessoa específica do cache.
-     */
-    private void removePersonFromCache(Long id) {
-        log.info("removePersonFromCache({})", id);
-
-        Cache cache = cacheManager.getCache(CACHE_NAME);
-        if (cache != null) {
-            cache.evict(id);
-        }
-    }
-
-    private void setPersonsToCache(List<Person> entities) {
-        log.info("setPersonsToCache(entities)");
-
-        Cache cache = cacheManager.getCache(CACHE_NAME);
-        if (cache != null) {
-            cache.put(CACHE_KEY_ALL, entities);
-        }
-    }
 }
