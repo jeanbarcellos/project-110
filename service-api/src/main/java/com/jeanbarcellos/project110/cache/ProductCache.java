@@ -7,38 +7,28 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 
-import com.jeanbarcellos.project110.dto.PersonResponse;
+import com.jeanbarcellos.project110.dto.ProductResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Componente responsavel por toda a infraestrutura de cache de
- * {@link PersonResponse}.
- *
- * Esta classe e defensiva: nenhuma operacao de cache deve interromper o fluxo
- * principal da aplicacao. Por isso, excecoes sao tratadas internamente e apenas
- * registradas em log.
+ * Infraestrutura manual de cache para produtos.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PersonCache {
+public class ProductCache {
 
-    private static final String LOG_PREFIX = "[PERSON-CACHE]";
+    private static final String LOG_PREFIX = "[PRODUCT-CACHE]";
 
-    private static final String CACHE_NAME = "persons";
+    private static final String CACHE_NAME = "products";
     private static final String CACHE_KEY_ALL = "all";
 
     private final CacheManager cacheManager;
 
-    /**
-     * Recupera do cache a lista completa de pessoas (chave {@code all}).
-     *
-     * @return lista em cache ou {@code null} quando nao houver valor/caso de erro.
-     */
     @SuppressWarnings("unchecked")
-    public List<PersonResponse> getAll() {
+    public List<ProductResponse> getAll() {
         try {
             var cache = this.getCacheOrNull();
             if (cache == null) {
@@ -46,40 +36,27 @@ public class PersonCache {
             }
 
             log.info("{} getAll()", LOG_PREFIX);
-
             return cache.get(CACHE_KEY_ALL, List.class);
         } catch (Exception ex) {
-            log.warn("{} Falha ao ler lista de pessoas do cache.", LOG_PREFIX, ex);
+            log.warn("{} Falha ao ler lista de produtos do cache.", LOG_PREFIX, ex);
             return null;
         }
     }
 
-    /**
-     * Armazena no cache a lista completa de pessoas.
-     *
-     * @param persons lista que deve ficar associada a chave {@code all}.
-     */
-    public void putAll(List<PersonResponse> persons) {
+    public void putAll(List<ProductResponse> products) {
         try {
             var cache = this.getCacheOrNull();
             if (cache == null) {
                 return;
             }
 
-            int size = persons == null ? 0 : persons.size();
-
-            log.info("{} putAll(size={})", LOG_PREFIX, size);
-
-            cache.put(CACHE_KEY_ALL, persons);
+            log.info("{} putAll(size={})", LOG_PREFIX, products == null ? 0 : products.size());
+            cache.put(CACHE_KEY_ALL, products);
         } catch (Exception ex) {
-            log.warn("{} Falha ao gravar lista de pessoas no cache.", LOG_PREFIX, ex);
+            log.warn("{} Falha ao gravar lista de produtos no cache.", LOG_PREFIX, ex);
         }
     }
 
-    /**
-     * Invalida a chave {@code all}, forcando recarga da listagem na proxima
-     * consulta.
-     */
     public void evictAll() {
         try {
             var cache = this.getCacheOrNull();
@@ -88,45 +65,30 @@ public class PersonCache {
             }
 
             log.info("{} evictAll()", LOG_PREFIX);
-
             cache.evict(CACHE_KEY_ALL);
         } catch (Exception ex) {
             log.warn("{} Falha ao invalidar chave '{}' do cache.", LOG_PREFIX, CACHE_KEY_ALL, ex);
         }
     }
 
-    /**
-     * Recupera uma pessoa do cache usando o ID como chave.
-     *
-     * @param id identificador da pessoa.
-     * @return {@link Optional} com pessoa em cache; vazio quando nao houver valor
-     *         ou em caso de erro.
-     */
-    public Optional<PersonResponse> getById(Long id) {
+    public Optional<ProductResponse> getById(Long id) {
         try {
             var cache = this.getCacheOrNull();
-
             if (cache == null) {
                 return Optional.empty();
             }
 
             log.info("{} getById({})", LOG_PREFIX, id);
-
-            return Optional.ofNullable(cache.get(id, PersonResponse.class));
+            return Optional.ofNullable(cache.get(id, ProductResponse.class));
         } catch (Exception ex) {
-            log.warn("{} Falha ao ler pessoa {} do cache.", LOG_PREFIX, id, ex);
+            log.warn("{} Falha ao ler produto {} do cache.", LOG_PREFIX, id, ex);
             return Optional.empty();
         }
     }
 
-    /**
-     * Armazena/atualiza uma pessoa no cache usando o ID como chave.
-     *
-     * @param person dto de resposta persistido.
-     */
-    public void put(PersonResponse person) {
+    public void put(ProductResponse product) {
         try {
-            if (person == null || person.getId() == null) {
+            if (product == null || product.getId() == null) {
                 return;
             }
 
@@ -135,18 +97,13 @@ public class PersonCache {
                 return;
             }
 
-            log.info("{} put({})", LOG_PREFIX, person.getId());
-            cache.put(person.getId(), person);
+            log.info("{} put({})", LOG_PREFIX, product.getId());
+            cache.put(product.getId(), product);
         } catch (Exception ex) {
-            log.warn("{} Falha ao gravar pessoa no cache.", LOG_PREFIX, ex);
+            log.warn("{} Falha ao gravar produto no cache.", LOG_PREFIX, ex);
         }
     }
 
-    /**
-     * Remove do cache uma pessoa especifica pelo ID.
-     *
-     * @param id identificador da pessoa que deve ser removida.
-     */
     public void evictById(Long id) {
         try {
             var cache = this.getCacheOrNull();
@@ -155,16 +112,12 @@ public class PersonCache {
             }
 
             log.info("{} evictById({})", LOG_PREFIX, id);
-
             cache.evict(id);
         } catch (Exception ex) {
-            log.warn("{} Falha ao remover pessoa {} do cache.", LOG_PREFIX, id, ex);
+            log.warn("{} Falha ao remover produto {} do cache.", LOG_PREFIX, id, ex);
         }
     }
 
-    /**
-     * Limpa todas as entradas do cache de pessoas.
-     */
     public void clearAllEntries() {
         try {
             var cache = this.getCacheOrNull();
@@ -179,11 +132,6 @@ public class PersonCache {
         }
     }
 
-    /**
-     * Recupera a instancia do cache configurado para pessoas.
-     *
-     * @return cache de pessoas ou {@code null} quando indisponivel.
-     */
     private Cache getCacheOrNull() {
         try {
             return this.cacheManager.getCache(CACHE_NAME);
