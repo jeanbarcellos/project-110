@@ -77,12 +77,22 @@ app-config:
   cache:
     default:
       ttl: 1m # duracao (ex.: 10m, 30m, 1h)
+
     categories:
       name: "categories"
       ttl: 1m # duracao (ex.: 10m, 30m, 1h)
+
     products:
       name: "products"
       ttl: 1m # duracao (ex.: 10m, 30m, 1h)
+
     persons:
       name: "persons"
       ttl: 1m # duracao (ex.: 10m, 30m, 1h)
+
+    redis:
+      host: ${CACHE_PORT_REDIS_HOST:${REDIS_HOST:localhost}}
+      port: ${CACHE_PORT_REDIS_PORT:${REDIS_PORT:6379}}
+      password: ${CACHE_PORT_REDIS_PASSWORD:${REDIS_PASSWORD:}}
+      database: ${CACHE_PORT_REDIS_DATABASE:0}
+      timeout: ${CACHE_PORT_REDIS_TIMEOUT:2s}

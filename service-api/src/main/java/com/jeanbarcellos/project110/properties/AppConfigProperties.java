@@ -30,9 +30,12 @@ public class AppConfigProperties {
     @Getter
     @Setter
     public static class Contact {
-        private String name = null;
-        private String url = null;
-        private String email = null;
+
+        private String name = "";
+
+        private String url = "";
+
+        private String email = "";
     }
 
     @Getter
@@ -50,6 +53,8 @@ public class AppConfigProperties {
 
         private CacheDetails persons = new CacheDetails("persons", Duration.ofMinutes(10));
 
+        private Redis redis = new Redis();
+
         public CacheDetails getDefault() {
             return defaultCache;
         }
@@ -57,6 +62,21 @@ public class AppConfigProperties {
         public void setDefault(CacheDetails cacheDetails) {
             this.defaultCache = cacheDetails;
         }
+    }
+
+    @Getter
+    @Setter
+    public static class Redis {
+
+        private String host = "localhost";
+
+        private int port = 6379;
+
+        private String password = "";
+
+        private int database = 0;
+
+        private Duration timeout = Duration.ofSeconds(2);
     }
 
     @Getter
