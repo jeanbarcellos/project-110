@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PersonCache {
 
+    private static final String LOG_PREFIX = "[PERSON-CACHE]";
     private static final String CACHE_NAME = "persons";
     private static final String CACHE_KEY_ALL = "all";
 
@@ -49,10 +50,11 @@ public class PersonCache {
                 return null;
             }
 
-            log.info("PersonCache.getAll()");
+            log.info("{} getAll()", LOG_PREFIX);
+
             return cache.get(CACHE_KEY_ALL, List.class);
         } catch (Exception ex) {
-            log.warn("Falha ao ler lista de pessoas do cache.", ex);
+            log.warn("{} Falha ao ler lista de pessoas do cache.", LOG_PREFIX, ex);
             return null;
         }
     }
@@ -69,10 +71,13 @@ public class PersonCache {
                 return;
             }
 
-            log.info("PersonCache.putAll(size={})", persons == null ? 0 : persons.size());
+            int size = persons == null ? 0 : persons.size();
+
+            log.info("{} putAll(size={})", LOG_PREFIX, size);
+
             cache.put(CACHE_KEY_ALL, persons);
         } catch (Exception ex) {
-            log.warn("Falha ao gravar lista de pessoas no cache.", ex);
+            log.warn("{} Falha ao gravar lista de pessoas no cache.", LOG_PREFIX, ex);
         }
     }
 
@@ -87,10 +92,11 @@ public class PersonCache {
                 return;
             }
 
-            log.info("PersonCache.evictAll()");
+            log.info("{} evictAll()", LOG_PREFIX);
+
             cache.evict(CACHE_KEY_ALL);
         } catch (Exception ex) {
-            log.warn("Falha ao invalidar chave '{}' do cache.", CACHE_KEY_ALL, ex);
+            log.warn("{} Falha ao invalidar chave '{}' do cache.", LOG_PREFIX, CACHE_KEY_ALL, ex);
         }
     }
 
@@ -104,14 +110,16 @@ public class PersonCache {
     public Optional<PersonResponse> getById(Long id) {
         try {
             var cache = this.getCacheOrNull();
+
             if (cache == null) {
                 return Optional.empty();
             }
 
-            log.info("PersonCache.getById({})", id);
+            log.info("{} getById({})", LOG_PREFIX, id);
+
             return Optional.ofNullable(cache.get(id, PersonResponse.class));
         } catch (Exception ex) {
-            log.warn("Falha ao ler pessoa {} do cache.", id, ex);
+            log.warn("{} Falha ao ler pessoa {} do cache.", LOG_PREFIX, id, ex);
             return Optional.empty();
         }
     }
@@ -132,10 +140,10 @@ public class PersonCache {
                 return;
             }
 
-            log.info("PersonCache.put({})", person.getId());
+            log.info("{} put({})", LOG_PREFIX, person.getId());
             cache.put(person.getId(), person);
         } catch (Exception ex) {
-            log.warn("Falha ao gravar pessoa no cache.", ex);
+            log.warn("{} Falha ao gravar pessoa no cache.", LOG_PREFIX, ex);
         }
     }
 
@@ -151,10 +159,11 @@ public class PersonCache {
                 return;
             }
 
-            log.info("PersonCache.evictById({})", id);
+            log.info("{} evictById({})", LOG_PREFIX, id);
+
             cache.evict(id);
         } catch (Exception ex) {
-            log.warn("Falha ao remover pessoa {} do cache.", id, ex);
+            log.warn("{} Falha ao remover pessoa {} do cache.", LOG_PREFIX, id, ex);
         }
     }
 
@@ -167,7 +176,7 @@ public class PersonCache {
         try {
             return this.cacheManager.getCache(CACHE_NAME);
         } catch (Exception ex) {
-            log.warn("Falha ao acessar cache '{}'.", CACHE_NAME, ex);
+            log.warn("{} Falha ao acessar cache '{}'.", LOG_PREFIX, CACHE_NAME, ex);
             return null;
         }
     }

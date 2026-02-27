@@ -8,6 +8,10 @@ public class ThreadUtils {
     private ThreadUtils() {
     }
 
+    public static void delay() {
+        delay(1000);
+    }
+
     public static void delay(long milliseconds) {
         try {
             Thread.sleep(milliseconds);

@@ -29,12 +29,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class CategoryService {
 
+    private static final String LOG_PREFIX = "[CATEGORY-SERVICE]";
+
     private static final String MSG_ERROR_CATEGORY_NOT_FOUND = "Category not found: %s";
 
     private static final String CACHE_NAME = "categories";
     private static final String CACHE_KEY_ALL = "'all'";
-
-    private static final int DB_DELAY = 1000;
 
     private final CategoryRepository categoryRepository;
 
@@ -48,10 +48,10 @@ public class CategoryService {
      */
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL)
     public List<CategoryResponse> getAll() {
-        log.info("CategoryService.getAll()");
+        log.info("{} getAll()", LOG_PREFIX);
 
-        log.info("Query no banco de dados");
-        ThreadUtils.delay(DB_DELAY);
+        log.info("{} Query no banco de dados", LOG_PREFIX);
+        ThreadUtils.delay();
 
         var entities = this.categoryRepository.findAll();
 
@@ -66,10 +66,10 @@ public class CategoryService {
      */
     @Cacheable(value = CACHE_NAME, key = "#id")
     public CategoryResponse getById(Long id) {
-        log.info("CategoryService.getById()");
+        log.info("{} getById()", LOG_PREFIX);
 
-        log.info("Query no banco de dados");
-        ThreadUtils.delay(3000);
+        log.info("{} Query no banco de dados", LOG_PREFIX);
+        ThreadUtils.delay();
 
         var entity = this.findByIdOrThrow(id);
 
@@ -86,6 +86,8 @@ public class CategoryService {
     @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public CategoryResponse create(CategoryRequest request) {
+        log.info("{} create()", LOG_PREFIX);
+
         var entity = this.categoryMapper.toEntity(request);
 
         entity = this.categoryRepository.save(entity);
@@ -103,6 +105,8 @@ public class CategoryService {
     @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public CategoryResponse update(CategoryRequest request) {
+        log.info("{} update()", LOG_PREFIX);
+
         var entity = this.findByIdOrThrow(request.getId());
 
         this.categoryMapper.copy(entity, request);
@@ -123,6 +127,8 @@ public class CategoryService {
             @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL) })
     @Transactional
     public void delete(Long id) {
+        log.info("{} delete()", LOG_PREFIX);
+
         this.categoryRepository.deleteById(id);
     }
 

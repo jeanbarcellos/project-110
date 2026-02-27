@@ -70,15 +70,19 @@ app-config:
   description: @project.description@
   version: @project.version@
 
+  contact:
+    name: Jean Barcellos
+    url: http://www.jeanbarcellos.com.br
+
   cache:
     default:
-      ttl: 1 # horas
+      ttl: 1m # duracao (ex.: 10m, 30m, 1h)
     categories:
       name: "categories"
-      ttl: 24 # horas
+      ttl: 1m # duracao (ex.: 10m, 30m, 1h)
     products:
       name: "products"
-      ttl: 16 # horas
+      ttl: 1m # duracao (ex.: 10m, 30m, 1h)
     persons:
       name: "persons"
-      ttl: 8 # horas
+      ttl: 1m # duracao (ex.: 10m, 30m, 1h)

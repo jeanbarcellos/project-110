@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Pattern Lazy Loading
+ * Pattern Cache-Aside (Lazy Loading)
  *
  * Adicionar ao cache quando solicidao
  */
@@ -28,12 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ProductService {
 
+    private static final String LOG_PREFIX = "[PRODUCT-SERVICE]";
+
     private static final String MSG_ERROR_PERSON_NOT_FOUND = "Product not found: %s";
 
     private static final String CACHE_NAME = "products";
     private static final String CACHE_KEY_ALL = "'all'";
-
-    private static final int DB_DELAY = 1000;
 
     private final ProductRepository productRepository;
 
@@ -48,10 +48,10 @@ public class ProductService {
      */
     @Cacheable(value = CACHE_NAME, key = CACHE_KEY_ALL)
     public List<ProductResponse> getAll() {
-        log.info("ProductService.getAll()");
+        log.info("{} getAll()", LOG_PREFIX);
 
-        log.info("Query no banco de dados");
-        ThreadUtils.delay(DB_DELAY);
+        log.info("{} Query no banco de dados", LOG_PREFIX);
+        ThreadUtils.delay();
 
         var entities = this.productRepository.findAll();
 
@@ -66,10 +66,10 @@ public class ProductService {
      */
     @Cacheable(value = CACHE_NAME, key = "#id")
     public ProductResponse getById(Long id) {
-        log.info("ProductService.getById()");
+        log.info("{} getById()", LOG_PREFIX);
 
-        log.info("Query no banco de dados");
-        ThreadUtils.delay(3000);
+        log.info("{} Query no banco de dados", LOG_PREFIX);
+        ThreadUtils.delay();
 
         var entity = this.findByIdOrThrow(id);
 
@@ -84,6 +84,8 @@ public class ProductService {
     @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL)
     @Transactional
     public ProductResponse create(ProductRequest request) {
+        log.info("{} create()", LOG_PREFIX);
+
         var entity = this.productMapper.toEntity(request);
 
         entity = this.productRepository.save(entity);
@@ -98,10 +100,12 @@ public class ProductService {
      * - Remove o cache da lista completa ('all') para garantir que os dados estejam atualizados na próxima consulta.
      */
     @Caching(evict = {
-        @CacheEvict(value = CACHE_NAME, key = "#result.id"),
+        @CacheEvict(value = CACHE_NAME, key = "#request.id"),
         @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL) })
     @Transactional
     public ProductResponse update(ProductRequest request) {
+        log.info("{} update()", LOG_PREFIX);
+
         var entity = this.findByIdOrThrow(request.getId());
 
         this.productMapper.copy(entity, request);
@@ -122,6 +126,8 @@ public class ProductService {
             @CacheEvict(value = CACHE_NAME, key = CACHE_KEY_ALL) })
     @Transactional
     public void delete(Long id) {
+        log.info("{} delete()", LOG_PREFIX);
+
         this.productRepository.deleteById(id);
     }
 
@@ -131,7 +137,7 @@ public class ProductService {
 
     private Product findByIdOrThrow(Long id) {
         return this.productRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException(String.format(MSG_ERROR_PERSON_NOT_FOUND, id)));
+                .orElseThrow(() -> new RuntimeException(String.format(MSG_ERROR_PERSON_NOT_FOUND, id)));
     }
 
 }

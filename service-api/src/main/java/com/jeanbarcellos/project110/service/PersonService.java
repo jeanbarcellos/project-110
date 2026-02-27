@@ -23,9 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PersonService {
 
-    private static final String MSG_ERROR_PERSON_NOT_FOUND = "Person not found: %s";
+    private static final String LOG_PREFIX = "[PERSON-SERVICE]";
 
-    private static final int DB_DELAY = 1000;
+    private static final String MSG_ERROR_PERSON_NOT_FOUND = "Person not found: %s";
 
     private final PersonRepository personRepository;
 
@@ -36,23 +36,23 @@ public class PersonService {
     /**
      * Recupera todas as pessoas.
      *
-     * Primeiro tenta retornar a lista do cache. Em caso de cache
-     * vazio/indisponivel,
-     * busca no banco e atualiza o cache.
+     * - Primeiro tenta retornar a lista do cache.
+     * - Em caso de cache vazio/indisponivel,
+     * - Busca no banco e atualiza o cache.
      */
     public List<PersonResponse> getAll() {
-        log.info("PersonService.getAll()");
+        log.info("{} getAll()", LOG_PREFIX);
 
-        var cachedPersons = this.personCache.getAll();
+        var cachedEntities = this.personCache.getAll();
 
-        if (cachedPersons != null) {
-            return cachedPersons;
+        if (cachedEntities != null) {
+            return cachedEntities;
         }
 
-        log.info("Query no banco de dados");
-        ThreadUtils.delay(DB_DELAY);
+        log.info("{} Query no banco de dados", LOG_PREFIX);
+        ThreadUtils.delay();
 
-        log.info("personRepository.findAll()");
+        log.info("{} personRepository.findAll()", LOG_PREFIX);
         var entities = this.personRepository.findAll();
 
         var responseList = this.personMapper.toResponseList(entities);
@@ -65,17 +65,19 @@ public class PersonService {
     /**
      * Recupera uma pessoa pelo ID.
      *
-     * Usa cache manual com a chave baseada no ID.
+     * - Usa cache manual com a chave baseada no ID.
      */
     public PersonResponse getById(Long id) {
-        var cachedPerson = this.personCache.getById(id);
+        log.info("{} getById()", LOG_PREFIX);
 
-        if (cachedPerson.isPresent()) {
-            return cachedPerson.get();
+        var cachedEntity = this.personCache.getById(id);
+
+        if (cachedEntity.isPresent()) {
+            return cachedEntity.get();
         }
 
-        log.info("Query no banco de dados");
-        ThreadUtils.delay(DB_DELAY);
+        log.info("{} Query no banco de dados", LOG_PREFIX);
+        ThreadUtils.delay();
 
         var entity = this.findByIdOrThrow(id);
 
@@ -89,9 +91,11 @@ public class PersonService {
     /**
      * Cria uma nova pessoa.
      *
-     * Atualiza o cache da lista completa e insere a pessoa individualmente.
+     * - Atualiza o cache da lista completa e insere a pessoa individualmente.
      */
     public PersonResponse create(PersonRequest request) {
+        log.info("{} create()", LOG_PREFIX);
+
         var entity = this.personMapper.toEntity(request);
 
         entity = this.personRepository.save(entity);
@@ -107,9 +111,11 @@ public class PersonService {
     /**
      * Atualiza uma pessoa existente.
      *
-     * Atualiza o cache da pessoa específica e da lista completa.
+     * - Atualiza o cache da pessoa específica e da lista completa.
      */
     public PersonResponse update(PersonRequest request) {
+        log.info("{} update()", LOG_PREFIX);
+
         var entity = this.findByIdOrThrow(request.getId());
 
         this.personMapper.copy(entity, request);
@@ -127,9 +133,11 @@ public class PersonService {
     /**
      * Exclui uma pessoa.
      *
-     * Atualiza o cache da lista completa e remove a pessoa específica do cache.
+     * - Atualiza o cache da lista completa e remove a pessoa específica do cache.
      */
     public void delete(Long id) {
+        log.info("{} delete()", LOG_PREFIX);
+
         this.personRepository.deleteById(id);
 
         this.personCache.evictById(id);
@@ -137,7 +145,7 @@ public class PersonService {
     }
 
     private Person findByIdOrThrow(Long id) {
-        log.info("personRepository.findById({})", id);
+        log.info("{} personRepository.findById({})", LOG_PREFIX, id);
         return this.personRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(String.format(MSG_ERROR_PERSON_NOT_FOUND, id)));
     }
