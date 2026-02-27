@@ -144,6 +144,12 @@ public class PersonService {
         this.personCache.evictAll();
     }
 
+    public void clearCache() {
+        log.info("{} clearCache()", LOG_PREFIX);
+
+        this.personCache.clearAllEntries();
+    }
+
     private Person findByIdOrThrow(Long id) {
         log.info("{} personRepository.findById({})", LOG_PREFIX, id);
         return this.personRepository.findById(id)

@@ -60,4 +60,11 @@ public class PersonController {
         this.personService.delete(id);
         ResponseEntity.noContent();
     }
+
+    @DeleteMapping("/cache")
+    @Operation(summary = "Limpar cache manual de produtos")
+    public ResponseEntity<Void> clearCache() {
+        this.personService.clearCache();
+        return ResponseEntity.noContent().build();
+    }
 }

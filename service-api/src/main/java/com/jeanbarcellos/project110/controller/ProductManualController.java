@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jeanbarcellos.project110.dto.ProductRequest;
 import com.jeanbarcellos.project110.dto.ProductResponse;
-import com.jeanbarcellos.project110.service.ProductService;
+import com.jeanbarcellos.project110.service.ProductManualService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,48 +23,48 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/products")
-@Tag(name = "Products", description = "Manage products")
-public class ProductController {
+@RequestMapping("/api/v1/manual/products")
+@Tag(name = "Products Manual", description = "Manage products with manual cache")
+public class ProductManualController {
 
-    private final ProductService productService;
+    private final ProductManualService productManualService;
 
     @GetMapping
-    @Operation(summary = "Listar todas os produtos")
+    @Operation(summary = "Listar todos os produtos (cache manual)")
     public ResponseEntity<List<ProductResponse>> getAll() {
-        return ResponseEntity.ok(this.productService.getAll());
+        return ResponseEntity.ok(this.productManualService.getAll());
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obter produto pelo ID")
+    @Operation(summary = "Obter produto pelo ID (cache manual)")
     public ResponseEntity<ProductResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(this.productService.getById(id));
+        return ResponseEntity.ok(this.productManualService.getById(id));
     }
 
     @PostMapping
-    @Operation(summary = "Criar um produto")
+    @Operation(summary = "Criar um produto (cache manual)")
     public ResponseEntity<ProductResponse> create(@RequestBody ProductRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED.value())
-                .body(this.productService.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(this.productManualService.create(request));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Alterar um produto")
+    @Operation(summary = "Alterar um produto (cache manual)")
     public ResponseEntity<ProductResponse> update(@PathVariable Long id, @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(this.productService.update(request.setId(id)));
+        return ResponseEntity.ok(this.productManualService.update(request.setId(id)));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Apagar um produto")
-    public void delete(@PathVariable Long id) {
-        this.productService.delete(id);
-        ResponseEntity.noContent();
+    @Operation(summary = "Apagar um produto (cache manual)")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        this.productManualService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/cache")
     @Operation(summary = "Limpar cache manual de produtos")
     public ResponseEntity<Void> clearCache() {
-        this.productService.clearCache();
+        this.productManualService.clearCache();
         return ResponseEntity.noContent().build();
     }
 }
